@@ -1,5 +1,5 @@
 [package]
-name = "rust_app"
+name = "rusty_fortress"
 version = "0.1.0"
 authors = ["Noel Garcia Guimeras <garcia.guimeras@gmail.com>"]
 edition = "2018"
