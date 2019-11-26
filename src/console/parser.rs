@@ -6,6 +6,16 @@ enum StateAction {
     End
 }
 
+impl Clone for StateAction {
+    fn clone(&self) -> Self {
+        match self {
+            StateAction::Keep => StateAction::Keep,
+            StateAction::Move(txt) => StateAction::Move(txt.clone()),
+            StateAction::End => StateAction::End
+        }
+    }
+}
+
 impl PartialEq for StateAction {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -20,6 +30,15 @@ impl PartialEq for StateAction {
 enum InputAction {
     Keep,
     Next
+}
+
+impl Clone for InputAction {
+    fn clone(&self) -> Self {
+        match self {
+            InputAction::Keep => InputAction::Keep,
+            InputAction::Next => InputAction::Next
+        }
+    }
 }
 
 enum OutputAction {
@@ -51,11 +70,55 @@ impl Clone for OutputAction {
     }
 }
 
-type StateRule = Fn(&str) -> (StateAction, InputAction, OutputAction);
+type RuleResult = (StateAction, InputAction, OutputAction);
+type StateRule = (String, RuleResult);
 
 struct State {
     name: String,
-    next_state: Box<StateRule>
+    rules: Vec<StateRule>,
+    default_rule: StateRule
+}
+
+impl State {
+
+    fn new(name: String) -> State {
+        State {
+            name: name,
+            rules: Vec::new(),
+            default_rule: (String::from(""), (StateAction::Keep, InputAction::Keep, OutputAction::None))
+        }
+    }
+
+    fn add_rule(mut self, text: String, result: RuleResult) -> State {
+        self.rules.push((text, result));
+        self
+    }
+
+    fn set_default_rule(mut self, result: RuleResult) -> State {
+        self.default_rule = (self.default_rule.0, result);
+        self
+    }
+
+    fn clone_and_replace_output(&self, text: &str, rule_result: &RuleResult) -> RuleResult {
+        let mut cloned = rule_result.clone();
+        if let OutputAction::Keyword(txt) = cloned.2 {
+            cloned.2 = OutputAction::Keyword(txt.replace("{TEXT}", &text));
+        }
+        if let OutputAction::Object(txt) = cloned.2 {
+            cloned.2 = OutputAction::Object(txt.replace("{TEXT}", &text));
+        }
+        cloned.clone()
+    }
+
+    fn next_state(&self, text: &str) -> RuleResult {
+        for rule in self.rules.iter() {
+            if text == rule.0 {
+                return self.clone_and_replace_output(&text, &rule.1);
+            }
+        }
+        self.clone_and_replace_output(&text, &self.default_rule.1)
+    }
+
 }
 
 impl fmt::Display for State {
@@ -72,41 +135,20 @@ impl StateMachine {
 
     pub fn create() -> StateMachine {
         let states = vec!(
-            State {
-                name: String::from("initial_state"),
-                next_state: Box::new(|txt| {
-                    if txt == "open" {
-                        return (StateAction::Move(String::from("i_open")), 
-                                InputAction::Next, 
-                                OutputAction::Keyword(String::from("open")));
-                    }
-                    (StateAction::Move(String::from("unknown_state")), 
-                     InputAction::Keep,
-                     OutputAction::None)
-                })
-            },
-            State {
-                name: String::from("unknown_state"),
-                next_state: Box::new(|_| { (StateAction::End, InputAction::Keep, OutputAction::Error) })
-            },
-    
-            State {
-                name: String::from("i_open"),
-                next_state: Box::new(|txt| {
-                    if txt != "" {
-                        return (StateAction::Keep, 
-                                InputAction::Next, 
-                                OutputAction::Object(String::from(txt)));
-                    } 
-                    (StateAction::Move(String::from("f_open")), InputAction::Keep, OutputAction::None)
-                })
-            },
-            State {
-                name: String::from("f_open"),
-                next_state: Box::new(|_| { (StateAction::End, InputAction::Keep, OutputAction::None) })
-            }
-        );
+            State::new(String::from("initial_state"))
+                .add_rule(String::from("open"), (StateAction::Move(String::from("i_open")), InputAction::Next, OutputAction::Keyword(String::from("open"))))
+                .set_default_rule((StateAction::Move(String::from("unknown_state")), InputAction::Keep, OutputAction::None)),
+        
+            State::new(String::from("unknown_state"))
+                .set_default_rule((StateAction::End, InputAction::Keep, OutputAction::Error)),
 
+            State::new(String::from("i_open"))
+                .add_rule(String::from(""), (StateAction::Move(String::from("f_open")), InputAction::Keep, OutputAction::None))
+                .set_default_rule((StateAction::Keep, InputAction::Next, OutputAction::Object(String::from("{TEXT}")))),
+
+            State::new(String::from("f_open"))
+                .set_default_rule((StateAction::End, InputAction::Keep, OutputAction::None))
+        );
         StateMachine {
             states: states
         }
@@ -153,7 +195,7 @@ impl StateMachine {
         
         while running {
 
-            let applied_rule_result = (*(current_state.next_state))(&word);
+            let applied_rule_result = current_state.next_state(&word);
 
             match applied_rule_result.2 {
                 OutputAction::None => {},
