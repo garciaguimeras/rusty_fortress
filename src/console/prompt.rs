@@ -2,16 +2,19 @@ use std::io;
 use std::io::Write;
 
 use crate::console::action::Action;
+use crate::console::parser;
 use crate::obj;
 use crate::cmd;
 
+
 fn prompt() {
     println!();
+    println!("What do you want to do now?");
     print!("> ");
     let _ = io::stdout().flush();
 }
 
-fn read_line_and_split() -> Vec<String> {
+fn read_line() -> String {
     let mut line = String::new();
     prompt();    
     match io::stdin().read_line(&mut line) {
@@ -19,12 +22,15 @@ fn read_line_and_split() -> Vec<String> {
         Err(_) => line = String::new()
     }
 
-    let split_line: Vec<&str> = line.trim().split(' ').collect();
+    line
+}
+
+fn split_line(line: &str) -> Vec<String> {
+    let splitted: Vec<&str> = line.trim().split(' ').collect();
     let mut words: Vec<String> = Vec::new(); 
-    for word in split_line.iter() {
+    for word in splitted.iter() {
         words.push(String::from(*word));
     }
-
     words
 }
 
@@ -58,11 +64,18 @@ fn check_commands(executor: &cmd::Executor, action_str: &str) {
     executor.execute_command(&black_arrow, action_str);
 }
 
+fn parse_line(line: &str) {
+    let state_machine = parser::StateMachine::create();
+    state_machine.parse_line(line);
+
+}
+
 pub fn run() {
     let executor = cmd::Executor::init();
     let mut running = true;
     while running {
-        let words = read_line_and_split();
+        let line = read_line();
+        let words = split_line(&line);
         if words.len() > 0 {
             let action = get_action(&words[0]);
             match action {
@@ -70,7 +83,8 @@ pub fn run() {
                 Action::Help => print_help(),
                 Action::None => {},
                 Action::Other => {
-                    check_commands(&executor, &words[0]);
+                    //check_commands(&executor, &words[0]);
+                    parse_line(&line);
                 }
             };
         }
