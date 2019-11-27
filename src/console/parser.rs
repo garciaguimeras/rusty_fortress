@@ -71,7 +71,56 @@ impl Clone for OutputAction {
 }
 
 type RuleResult = (StateAction, InputAction, OutputAction);
-type StateRule = (String, RuleResult);
+
+struct StateRule {
+    input: String,
+    result: RuleResult
+}
+
+impl StateRule {
+
+    fn new(name: String) -> StateRule {
+        StateRule { 
+            input: name, 
+            result: (StateAction::Keep, InputAction::Keep, OutputAction::None) 
+        }
+    }
+
+    fn default_rule() -> StateRule {
+        Self::new(String::from(""))
+    }
+
+    fn set_end_state(mut self) -> StateRule {
+        self.result.0 = StateAction::End;
+        self
+    }
+
+    fn set_move_state(mut self, text: &str) -> StateRule {
+        self.result.0 = StateAction::Move(text.to_string());
+        self
+    }
+
+    fn set_next_input(mut self) -> StateRule {
+        self.result.1 = InputAction::Next;
+        self
+    }
+
+    fn set_error_output(mut self) -> StateRule {
+        self.result.2 = OutputAction::Error;
+        self
+    }
+
+    fn set_keyword_output(mut self) -> StateRule {
+        self.result.2 = OutputAction::Keyword("".to_string());
+        self
+    }
+
+    fn set_object_output(mut self) -> StateRule {
+        self.result.2 = OutputAction::Object("".to_string());
+        self
+    }
+
+}
 
 struct State {
     name: String,
@@ -85,38 +134,38 @@ impl State {
         State {
             name: name,
             rules: Vec::new(),
-            default_rule: (String::from(""), (StateAction::Keep, InputAction::Keep, OutputAction::None))
+            default_rule: StateRule::default_rule()
         }
     }
 
-    fn add_rule(mut self, text: String, result: RuleResult) -> State {
-        self.rules.push((text, result));
+    fn add_rule(mut self, rule: StateRule) -> State {
+        self.rules.push(rule);
         self
     }
 
-    fn set_default_rule(mut self, result: RuleResult) -> State {
-        self.default_rule = (self.default_rule.0, result);
+    fn set_default_rule(mut self, rule: StateRule) -> State {
+        self.default_rule = rule;
         self
     }
 
     fn clone_and_replace_output(&self, text: &str, rule_result: &RuleResult) -> RuleResult {
         let mut cloned = rule_result.clone();
-        if let OutputAction::Keyword(txt) = cloned.2 {
-            cloned.2 = OutputAction::Keyword(txt.replace("{TEXT}", &text));
+        if let OutputAction::Keyword(_) = cloned.2 {
+            cloned.2 = OutputAction::Keyword(String::from(text));
         }
-        if let OutputAction::Object(txt) = cloned.2 {
-            cloned.2 = OutputAction::Object(txt.replace("{TEXT}", &text));
+        if let OutputAction::Object(_) = cloned.2 {
+            cloned.2 = OutputAction::Object(String::from(text));
         }
         cloned.clone()
     }
 
     fn next_state(&self, text: &str) -> RuleResult {
         for rule in self.rules.iter() {
-            if text == rule.0 {
-                return self.clone_and_replace_output(&text, &rule.1);
+            if text == rule.input {
+                return self.clone_and_replace_output(&text, &rule.result);
             }
         }
-        self.clone_and_replace_output(&text, &self.default_rule.1)
+        self.clone_and_replace_output(&text, &self.default_rule.result)
     }
 
 }
@@ -136,18 +185,29 @@ impl StateMachine {
     pub fn create() -> StateMachine {
         let states = vec!(
             State::new(String::from("initial_state"))
-                .add_rule(String::from("open"), (StateAction::Move(String::from("i_open")), InputAction::Next, OutputAction::Keyword(String::from("open"))))
-                .set_default_rule((StateAction::Move(String::from("unknown_state")), InputAction::Keep, OutputAction::None)),
+                .add_rule(StateRule::new(String::from("open")).set_move_state("i_open").set_next_input().set_keyword_output())
+                .set_default_rule(StateRule::default_rule().set_move_state("unknown_state")),
         
             State::new(String::from("unknown_state"))
-                .set_default_rule((StateAction::End, InputAction::Keep, OutputAction::Error)),
+                .set_default_rule(StateRule::default_rule().set_end_state().set_error_output()),
+
+            State::new(String::from("default_intermediate_state"))
+                .add_rule(StateRule::new(String::from("")).set_move_state("final_intermediate_state"))
+                .set_default_rule(StateRule::default_rule().set_next_input().set_object_output()),
+
+            State::new(String::from("final_intermediate_state"))
+                .set_default_rule(StateRule::default_rule().set_end_state()),
 
             State::new(String::from("i_open"))
-                .add_rule(String::from(""), (StateAction::Move(String::from("f_open")), InputAction::Keep, OutputAction::None))
-                .set_default_rule((StateAction::Keep, InputAction::Next, OutputAction::Object(String::from("{TEXT}")))),
+                .add_rule(StateRule::new(String::from("")).set_move_state("f_open"))
+                .add_rule(StateRule::new(String::from("with")).set_move_state("i_openwith"))
+                .set_default_rule(StateRule::default_rule().set_next_input().set_object_output()),
+
+            State::new(String::from("i_openwith"))
+                .set_default_rule(StateRule::default_rule().set_move_state("default_intermediate_state").set_next_input().set_keyword_output()),
 
             State::new(String::from("f_open"))
-                .set_default_rule((StateAction::End, InputAction::Keep, OutputAction::None))
+                .set_default_rule(StateRule::default_rule().set_end_state())
         );
         StateMachine {
             states: states
