@@ -21,7 +21,7 @@ pub struct Executor {
 
 impl Executor {
 
-    pub fn init() -> Executor {
+    pub fn new() -> Executor {
         let mut map: HashMap<String, CommandFn> = HashMap::new();
 
         map.insert(String::from("view"), view);

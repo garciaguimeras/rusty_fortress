@@ -41,7 +41,7 @@ impl Clone for InputAction {
     }
 }
 
-enum OutputAction {
+pub enum OutputAction {
     None,
     Error,
     Keyword(String),
@@ -79,15 +79,27 @@ struct StateRule {
 
 impl StateRule {
 
-    fn new(name: String) -> StateRule {
+    fn rule(name: &str) -> StateRule {
         StateRule { 
-            input: name, 
+            input: name.to_string(), 
             result: (StateAction::Keep, InputAction::Keep, OutputAction::None) 
         }
     }
 
     fn default_rule() -> StateRule {
-        Self::new(String::from(""))
+        Self::rule("")
+    }
+
+    fn keyword_rule(name: &str, next_state: &str) -> StateRule {
+        Self::rule(name).set_move_state(next_state).set_next_input().set_keyword_output()
+    }
+
+    fn end_rule() -> StateRule {
+        Self::default_rule().set_end_state()
+    }
+
+    fn error_rule() -> StateRule {
+        Self::default_rule().set_end_state().set_error_output()
     }
 
     fn set_end_state(mut self) -> StateRule {
@@ -130,9 +142,9 @@ struct State {
 
 impl State {
 
-    fn new(name: String) -> State {
+    fn build(name: &str) -> State {
         State {
-            name: name,
+            name: name.to_string(),
             rules: Vec::new(),
             default_rule: StateRule::default_rule()
         }
@@ -182,32 +194,36 @@ pub struct StateMachine {
 
 impl StateMachine {
 
-    pub fn create() -> StateMachine {
+    pub fn build() -> StateMachine {
         let states = vec!(
-            State::new(String::from("initial_state"))
-                .add_rule(StateRule::new(String::from("open")).set_move_state("i_open").set_next_input().set_keyword_output())
+            State::build("initial_state")
+                .add_rule(StateRule::keyword_rule("help", "default_intermediate_state"))
+                .add_rule(StateRule::keyword_rule("?", "default_intermediate_state"))
+                .add_rule(StateRule::keyword_rule("exit", "default_intermediate_state"))
+                .add_rule(StateRule::keyword_rule("quit", "default_intermediate_state"))
+                .add_rule(StateRule::keyword_rule("open", "i_open"))
                 .set_default_rule(StateRule::default_rule().set_move_state("unknown_state")),
         
-            State::new(String::from("unknown_state"))
-                .set_default_rule(StateRule::default_rule().set_end_state().set_error_output()),
+            State::build("unknown_state")
+                .set_default_rule(StateRule::error_rule()),
 
-            State::new(String::from("default_intermediate_state"))
-                .add_rule(StateRule::new(String::from("")).set_move_state("final_intermediate_state"))
+            State::build("default_intermediate_state")
+                .add_rule(StateRule::rule("").set_move_state("final_intermediate_state"))
                 .set_default_rule(StateRule::default_rule().set_next_input().set_object_output()),
 
-            State::new(String::from("final_intermediate_state"))
-                .set_default_rule(StateRule::default_rule().set_end_state()),
+            State::build("final_intermediate_state")
+                .set_default_rule(StateRule::end_rule()),
 
-            State::new(String::from("i_open"))
-                .add_rule(StateRule::new(String::from("")).set_move_state("f_open"))
-                .add_rule(StateRule::new(String::from("with")).set_move_state("i_openwith"))
+            State::build("i_open")
+                .add_rule(StateRule::rule("").set_move_state("f_open"))
+                .add_rule(StateRule::rule("with").set_move_state("i_openwith"))
                 .set_default_rule(StateRule::default_rule().set_next_input().set_object_output()),
 
-            State::new(String::from("i_openwith"))
-                .set_default_rule(StateRule::default_rule().set_move_state("default_intermediate_state").set_next_input().set_keyword_output()),
+            State::build("i_openwith")
+                .set_default_rule(StateRule::keyword_rule("with", "default_intermediate_state")),
 
-            State::new(String::from("f_open"))
-                .set_default_rule(StateRule::default_rule().set_end_state())
+            State::build("f_open")
+                .set_default_rule(StateRule::end_rule())
         );
         StateMachine {
             states: states
@@ -241,7 +257,7 @@ impl StateMachine {
         new_output
     }
 
-    pub fn parse_line(&self, text: &str) {
+    pub fn parse_line(&self, text: &str) -> Vec<OutputAction> {
         let words: Vec<String> = text.trim().split(' ')                       
             .map(|w| w.to_lowercase())
             .collect();
@@ -278,9 +294,9 @@ impl StateMachine {
         }
 
         output = self.mix_output_state(output);
-        for output_state in output.iter() {
-            println!("{}", output_state);
-        }
-
+        //for output_state in output.iter() {
+        //    println!("{}", output_state);
+        //}
+        output
     }
 }

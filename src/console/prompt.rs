@@ -22,38 +22,38 @@ fn read_line() -> String {
         Err(_) => line = String::new()
     }
 
-    line
+    line.trim().to_string()
 }
 
-fn split_line(line: &str) -> Vec<String> {
-    let splitted: Vec<&str> = line.trim().split(' ').collect();
-    let mut words: Vec<String> = Vec::new(); 
-    for word in splitted.iter() {
-        words.push(String::from(*word));
-    }
-    words
-}
-
-fn get_action(first_word: &str) -> Action {
-    let word = String::from(first_word);
-
-    if word == "" {
-        return Action::None;
+fn get_action(output: &Vec<parser::OutputAction>) -> Action {
+    // Check if last output is error
+    let last_action = output.get(output.len() - 1).unwrap();
+    if let parser::OutputAction::Error = last_action {
+        return Action::Error;
     }
 
-    if word == "exit" || word == "quit" {
-        return Action::Quit;
+    // Check for first action (should be a command)
+    let first_action = output.get(0).unwrap();
+    if let parser::OutputAction::Keyword(k) = first_action {
+        if k == "exit" || k == "quit" {
+            return Action::Quit;
+        }
+        if k == "help" || k == "?" {
+            return Action::Help;
+        }
+        return Action::Other;
     }
 
-    if word == "help" || word == "?" {
-        return Action::Help;
-    }
-
-    Action::Other
+    // Else, error...
+    Action::Error
 }
 
 fn print_help() {
     println!("This help, right now, doesn't help too much.");
+}
+
+fn print_error() {
+    println!("Cannot understand what are you trying to do.");
 }
 
 fn check_commands(executor: &cmd::Executor, action_str: &str) {
@@ -64,27 +64,21 @@ fn check_commands(executor: &cmd::Executor, action_str: &str) {
     executor.execute_command(&black_arrow, action_str);
 }
 
-fn parse_line(line: &str) {
-    let state_machine = parser::StateMachine::create();
-    state_machine.parse_line(line);
-
-}
-
 pub fn run() {
-    let executor = cmd::Executor::init();
+    let state_machine = parser::StateMachine::build();
+    let executor = cmd::Executor::new();
     let mut running = true;
     while running {
         let line = read_line();
-        let words = split_line(&line);
-        if words.len() > 0 {
-            let action = get_action(&words[0]);
+        if line.len() > 0 {
+            let output = state_machine.parse_line(&line);
+            let action = get_action(&output);
             match action {
                 Action::Quit => running = false,
                 Action::Help => print_help(),
-                Action::None => {},
+                Action::Error => print_error(),
                 Action::Other => {
-                    //check_commands(&executor, &words[0]);
-                    parse_line(&line);
+                    // check_commands(&executor, &words[0]);
                 }
             };
         }
