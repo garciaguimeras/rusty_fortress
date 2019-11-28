@@ -40,20 +40,20 @@ pub fn execute(output: &Vec<parser::OutputAction>) -> bool {
     // Check for first action (should be a command)
     let first_action = output.get(0).unwrap();
     if let parser::OutputAction::Keyword(k) = first_action {
-
-        // Predefined actions
-        if k == "exit" || k == "quit" {
-            print_quit();
-            return false;
-        }
-        if k == "help" || k == "?" {
-            print_help();
-            return true;
-        }
-
-        // Commands
-        execute_command(output);
-        return true;
+        return match k.as_str() {
+            "exit" | "quit" => {
+                print_quit();
+                false
+            },
+            "help" | "?" => {
+                print_help();
+                true
+            },
+            _ => {
+                execute_command(output);
+                true
+            }
+        }       
     }
 
     // Else, error...
