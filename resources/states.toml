@@ -1,0 +1,21 @@
+initial_state = "initial state"
+
+[[state]]
+name = "initial state"
+
+    [state.default_rule]
+    input = "keep:"
+    output = "none:"
+    next_state = "move:unknown state"
+
+    [[state.rule]]
+    text = ""
+    input = ""
+    output = ""
+    next_state = ""
+
+    [[state.rule]]
+    text = ""
+    input = ""
+    output = ""
+    next_state = ""

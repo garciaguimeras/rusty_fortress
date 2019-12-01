@@ -1,5 +1,6 @@
-use crate::obj::base::*;
-use crate::console::parser;
+use crate::obj::base;
+use crate::obj::env;
+use super::parser;
 
 fn print_help() {
     println!("This help, right now, doesn't help too much.");
@@ -13,15 +14,15 @@ fn print_quit() {
     println!("Good bye, cruel world.");
 }
 
-fn view(obj: &BaseObject) -> &str {
+fn view(obj: &base::BaseObject) -> &str {
     obj.view()
 }
 
-fn open(obj: &BaseObject) -> &str {
+fn open(obj: &base::BaseObject) -> &str {
     obj.open()
 }
 
-fn take(obj: &BaseObject) -> &str {
+fn take(obj: &base::BaseObject) -> &str {
     obj.take()
 }
 
@@ -29,7 +30,7 @@ fn execute_command(output: &Vec<parser::OutputAction>) {
 
 }
 
-pub fn execute(output: &Vec<parser::OutputAction>) -> bool {
+pub fn execute(environment: &env::Environment, output: &Vec<parser::OutputAction>) -> bool {
     // Check if last output is error
     let last_action = output.get(output.len() - 1).unwrap();
     if let parser::OutputAction::Error = last_action {
@@ -40,12 +41,12 @@ pub fn execute(output: &Vec<parser::OutputAction>) -> bool {
     // Check for first action (should be a command)
     let first_action = output.get(0).unwrap();
     if let parser::OutputAction::Keyword(k) = first_action {
-        return match k.as_str() {
-            "exit" | "quit" => {
+        return match k {
+            parser::Keyword::Quit => {
                 print_quit();
                 false
             },
-            "help" | "?" => {
+            parser::Keyword::Help => {
                 print_help();
                 true
             },

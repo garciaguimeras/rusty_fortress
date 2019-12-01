@@ -1,11 +1,12 @@
 use std::fmt;
 
+#[derive(Clone, PartialEq)]
 enum StateAction {
     Keep,
     Move(String),
     End
 }
-
+/*
 impl Clone for StateAction {
     fn clone(&self) -> Self {
         match self {
@@ -26,12 +27,14 @@ impl PartialEq for StateAction {
         }
     }
 }
+*/
 
+#[derive(Clone)]
 enum InputAction {
     Keep,
     Next
 }
-
+/*
 impl Clone for InputAction {
     fn clone(&self) -> Self {
         match self {
@@ -40,11 +43,32 @@ impl Clone for InputAction {
         }
     }
 }
+*/
 
+#[derive(Clone, PartialEq)]
+pub enum Keyword {
+    Help,
+    Quit, 
+    Open,
+    With
+}
+
+impl fmt::Display for Keyword {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Keyword::Help => write!(f, "Help"),
+            Keyword::Quit => write!(f, "Quit"),
+            Keyword::Open => write!(f, "Open"),
+            Keyword::With => write!(f, "With")
+        }
+    }
+}
+
+#[derive(Clone, PartialEq)]
 pub enum OutputAction {
     None,
     Error,
-    Keyword(String),
+    Keyword(Keyword),
     Object(String)
 }
 
@@ -53,12 +77,13 @@ impl fmt::Display for OutputAction {
         match self {
             OutputAction::None => write!(f, "OutputAction::None"),
             OutputAction::Error => write!(f, "OutputAction::Error"),
-            OutputAction::Keyword(txt) => write!(f, "OutputAction::Keyword: {}", txt),
+            OutputAction::Keyword(k) => write!(f, "OutputAction::Keyword: {}", k),
             OutputAction::Object(txt) => write!(f, "OutputAction::Object: {}", txt)
         }
     }
 }
 
+/*
 impl Clone for OutputAction {
     fn clone(&self) -> Self {
         match self {
@@ -69,6 +94,19 @@ impl Clone for OutputAction {
         }
     }
 }
+
+impl PartialEq for OutputAction {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (OutputAction::None, OutputAction::None) => true,
+            (OutputAction::Error, OutputAction::Error) => true,
+            (OutputAction::Keyword(txt1), OutputAction::Keyword(txt2)) => txt1 == txt2,
+            (OutputAction::Object(txt1), OutputAction::Object(txt2)) => txt1 == txt2,
+            _ => false
+        }
+    }
+}
+*/
 
 type RuleResult = (StateAction, InputAction, OutputAction);
 
@@ -90,8 +128,8 @@ impl StateRule {
         Self::rule("")
     }
 
-    fn keyword_rule(name: &str, next_state: &str) -> StateRule {
-        Self::rule(name).set_move_state(next_state).set_next_input().set_keyword_output()
+    fn keyword_rule(name: &str, next_state: &str, keyword: Keyword) -> StateRule {
+        Self::rule(name).set_move_state(next_state).set_next_input().set_keyword_output(keyword)
     }
 
     fn end_rule() -> StateRule {
@@ -122,8 +160,8 @@ impl StateRule {
         self
     }
 
-    fn set_keyword_output(mut self) -> StateRule {
-        self.result.2 = OutputAction::Keyword("".to_string());
+    fn set_keyword_output(mut self, keyword: Keyword) -> StateRule {
+        self.result.2 = OutputAction::Keyword(keyword);
         self
     }
 
@@ -162,8 +200,8 @@ impl State {
 
     fn clone_and_replace_output(&self, text: &str, rule_result: &RuleResult) -> RuleResult {
         let mut cloned = rule_result.clone();
-        if let OutputAction::Keyword(_) = cloned.2 {
-            cloned.2 = OutputAction::Keyword(String::from(text));
+        if let OutputAction::Keyword(k) = cloned.2 {
+            cloned.2 = OutputAction::Keyword(k);
         }
         if let OutputAction::Object(_) = cloned.2 {
             cloned.2 = OutputAction::Object(String::from(text));
@@ -197,11 +235,11 @@ impl StateMachine {
     pub fn build() -> StateMachine {
         let states = vec!(
             State::build("initial_state")
-                .add_rule(StateRule::keyword_rule("help", "default_intermediate_state"))
-                .add_rule(StateRule::keyword_rule("?", "default_intermediate_state"))
-                .add_rule(StateRule::keyword_rule("exit", "default_intermediate_state"))
-                .add_rule(StateRule::keyword_rule("quit", "default_intermediate_state"))
-                .add_rule(StateRule::keyword_rule("open", "i_open"))
+                .add_rule(StateRule::keyword_rule("help", "default_intermediate_state", Keyword::Help))
+                .add_rule(StateRule::keyword_rule("?", "default_intermediate_state", Keyword::Help))
+                .add_rule(StateRule::keyword_rule("exit", "default_intermediate_state", Keyword::Quit))
+                .add_rule(StateRule::keyword_rule("quit", "default_intermediate_state", Keyword::Quit))
+                .add_rule(StateRule::keyword_rule("open", "i_open", Keyword::Open))
                 .set_default_rule(StateRule::default_rule().set_move_state("unknown_state")),
         
             State::build("unknown_state")
@@ -220,7 +258,7 @@ impl StateMachine {
                 .set_default_rule(StateRule::default_rule().set_next_input().set_object_output()),
 
             State::build("i_openwith")
-                .set_default_rule(StateRule::keyword_rule("with", "default_intermediate_state")),
+                .set_default_rule(StateRule::keyword_rule("with", "default_intermediate_state", Keyword::With)),
 
             State::build("f_open")
                 .set_default_rule(StateRule::end_rule())
