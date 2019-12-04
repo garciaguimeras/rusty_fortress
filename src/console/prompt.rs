@@ -2,12 +2,11 @@ use std::io;
 use std::io::Write;
 use crate::console::parser;
 use crate::obj::env;
-use super::syntax;
 use super::cmd;
 
 fn prompt() {
     println!();
-    println!("What do you want to do now?");
+    //println!("What do you want to do now?");
     print!("> ");
     let _ = io::stdout().flush();
 }

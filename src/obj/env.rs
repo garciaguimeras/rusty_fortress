@@ -13,7 +13,10 @@ impl Environment {
                 name: String::from("Black Arrow"),
                 description: String::from("Does not seem to be a main character of nothing")
             }),
-            objects: vec!()
+            objects: vec!(Box::new(base::Arrow { 
+                name: String::from("Main Door"),
+                description: String::from("It's just a main door")
+            }))
         }
     }
 

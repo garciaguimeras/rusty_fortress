@@ -1,4 +1,5 @@
 use std::fmt;
+use std::iter;
 
 #[derive(Clone, PartialEq)]
 enum StateAction {
@@ -6,44 +7,12 @@ enum StateAction {
     Move(String),
     End
 }
-/*
-impl Clone for StateAction {
-    fn clone(&self) -> Self {
-        match self {
-            StateAction::Keep => StateAction::Keep,
-            StateAction::Move(txt) => StateAction::Move(txt.clone()),
-            StateAction::End => StateAction::End
-        }
-    }
-}
-
-impl PartialEq for StateAction {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (StateAction::Keep, StateAction::Keep) => true,
-            (StateAction::End, StateAction::End) => true,
-            (StateAction::Move(txt1), StateAction::Move(txt2)) => txt1 == txt2,
-            _ => false
-        }
-    }
-}
-*/
 
 #[derive(Clone)]
 enum InputAction {
     Keep,
     Next
 }
-/*
-impl Clone for InputAction {
-    fn clone(&self) -> Self {
-        match self {
-            InputAction::Keep => InputAction::Keep,
-            InputAction::Next => InputAction::Next
-        }
-    }
-}
-*/
 
 #[derive(Clone, PartialEq)]
 pub enum Keyword {
@@ -82,31 +51,6 @@ impl fmt::Display for OutputAction {
         }
     }
 }
-
-/*
-impl Clone for OutputAction {
-    fn clone(&self) -> Self {
-        match self {
-            OutputAction::None => OutputAction::None,
-            OutputAction::Error => OutputAction::Error,
-            OutputAction::Keyword(txt) => OutputAction::Keyword(txt.clone()),
-            OutputAction::Object(txt) => OutputAction::Object(txt.clone())
-        }
-    }
-}
-
-impl PartialEq for OutputAction {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (OutputAction::None, OutputAction::None) => true,
-            (OutputAction::Error, OutputAction::Error) => true,
-            (OutputAction::Keyword(txt1), OutputAction::Keyword(txt2)) => txt1 == txt2,
-            (OutputAction::Object(txt1), OutputAction::Object(txt2)) => txt1 == txt2,
-            _ => false
-        }
-    }
-}
-*/
 
 type RuleResult = (StateAction, InputAction, OutputAction);
 

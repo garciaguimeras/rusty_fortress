@@ -14,20 +14,34 @@ fn print_quit() {
     println!("Good bye, cruel world.");
 }
 
-fn view(obj: &base::BaseObject) -> &str {
-    obj.view()
+fn open(environment: &env::Environment, objects: &Vec<String>) {
+    println!("cmd: open");
 }
 
-fn open(obj: &base::BaseObject) -> &str {
-    obj.open()
+fn open_with(environment: &env::Environment, objects: &Vec<String>) {
+    println!("cmd: open with");
 }
 
-fn take(obj: &base::BaseObject) -> &str {
-    obj.take()
+fn get_all_keywords(output: &Vec<parser::OutputAction>) -> Vec<parser::Keyword> {
+    let mut keywords: Vec<parser::Keyword> = Vec::new();
+    output.iter().for_each(|o| { 
+        match o {
+            parser::OutputAction::Keyword(k) => { keywords.push(k.clone()) },
+            _ => {}
+        };
+    });
+    keywords
 }
 
-fn execute_command(output: &Vec<parser::OutputAction>) {
-
+fn get_all_objects(output: &Vec<parser::OutputAction>) -> Vec<String> {
+    let mut objects: Vec<String> = Vec::new();
+    output.iter().for_each(|o| { 
+        match o {
+            parser::OutputAction::Object(txt) => { objects.push(txt.clone()) },
+            _ => {}
+        };
+    });
+    objects
 }
 
 pub fn execute(environment: &env::Environment, output: &Vec<parser::OutputAction>) -> bool {
@@ -37,27 +51,29 @@ pub fn execute(environment: &env::Environment, output: &Vec<parser::OutputAction
         print_error();
         return true;
     }
-
-    // Check for first action (should be a command)
-    let first_action = output.get(0).unwrap();
-    if let parser::OutputAction::Keyword(k) = first_action {
-        return match k {
-            parser::Keyword::Quit => {
-                print_quit();
-                false
-            },
-            parser::Keyword::Help => {
-                print_help();
-                true
-            },
-            _ => {
-                execute_command(output);
-                true
-            }
-        }       
-    }
-
-    // Else, error...
-    print_error();
-    true
+ 
+    let keywords = get_all_keywords(&output);
+    let objects = get_all_objects(&output);
+    return match keywords.as_slice() {
+        [parser::Keyword::Quit] => {
+            print_quit();
+            false
+        },
+        [parser::Keyword::Help] => {
+            print_help();
+            true
+        },
+        [parser::Keyword::Open] => {
+            open(environment, &objects);
+            true
+        },
+        [parser::Keyword::Open, parser::Keyword::With] => {
+            open_with(environment, &objects);
+            true
+        },
+        _ => { 
+            print_error();
+            true
+        }
+    };
 }
