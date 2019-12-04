@@ -15,11 +15,35 @@ fn print_quit() {
 }
 
 fn open(environment: &env::Environment, objects: &Vec<String>) {
-    println!("cmd: open");
+    match objects.get(0) {
+        Some(obj_name) => {
+            match environment.find_object_by_name(&obj_name) {
+                Some(obj) => {
+                    let response = obj.open(&environment);
+                    println!("{}", response);
+                },
+                _ => println!("Cannot find {}.", obj_name)
+            }
+        },
+        _ => println!("Don't know what do you want to open.")
+    }
 }
 
 fn open_with(environment: &env::Environment, objects: &Vec<String>) {
-    println!("cmd: open with");
+    match (objects.get(0), objects.get(1)) {
+        (Some(obj_name1), Some(obj_name2)) => {
+            match (environment.find_object_by_name(&obj_name1), environment.find_object_by_name(&obj_name2))  {
+                (Some(obj1), Some(obj2)) => {
+                    let response = obj1.open_with(&environment, obj2);
+                    println!("{}", response);
+                },
+                (Some(_), None) => println!("Cannot find {}.", obj_name2),
+                _ => println!("Cannot find {}.", obj_name1)
+            }
+        },
+        (Some(_), None) => println!("Don't know what do you want to open with."),
+        _ => println!("Don't know what do you want to open."),
+    }
 }
 
 fn get_all_keywords(output: &Vec<parser::OutputAction>) -> Vec<parser::Keyword> {
