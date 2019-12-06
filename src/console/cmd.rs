@@ -15,12 +15,12 @@ fn print_quit() {
 }
 
 fn one_obj_fn<P>(environment: &env::Environment, objects: &Vec<String>, null_obj_err: &str, predicate: P)
-where P: Fn(&Box<base::BaseObject>, &env::Environment) -> String {
+where P: Fn(&env::Environment, &Box<base::BaseObject>) -> String {
     match objects.get(0) {
         Some(obj_name) => {
             match environment.find_object_by_name(&obj_name) {
                 Some(obj) => {
-                    let response = predicate(&obj, &environment);
+                    let response = predicate(&environment, obj);
                     println!("{}", response);
                 },
                 _ => println!("Cannot find {}.", obj_name)
@@ -31,12 +31,12 @@ where P: Fn(&Box<base::BaseObject>, &env::Environment) -> String {
 }
 
 fn two_objs_fn<P>(environment: &env::Environment, objects: &Vec<String>, null_obj1_err: &str, null_obj2_err: &str, predicate: P) 
-where P: Fn(&Box<base::BaseObject>, &env::Environment, &Box<base::BaseObject>) -> String {    
+where P: Fn(&env::Environment, &Box<base::BaseObject>, &Box<base::BaseObject>) -> String {    
     match (objects.get(0), objects.get(1)) {
         (Some(obj_name1), Some(obj_name2)) => {
             match (environment.find_object_by_name(&obj_name1), environment.find_object_by_name(&obj_name2))  {
                 (Some(obj1), Some(obj2)) => {
-                    let response = predicate(obj1, &environment, obj2);
+                    let response = predicate(&environment, obj1, obj2);
                     println!("{}", response);
                 },
                 (Some(_), None) => println!("Cannot find {}.", obj_name2),
@@ -93,7 +93,7 @@ pub fn execute(environment: &env::Environment, output: &Vec<parser::OutputAction
             one_obj_fn(environment, 
                 &objects, 
                 "Don't know what do you want to open.", 
-                |obj, env| { obj.open(env).to_string() }
+                |env, obj| { obj.open(env).to_string() }
             );
             true
         },
@@ -102,7 +102,7 @@ pub fn execute(environment: &env::Environment, output: &Vec<parser::OutputAction
                 &objects, 
                 "Don't know what do you want to open.", 
                 "Don't know what do you want to open with.", 
-                |obj1, env, obj2| { obj1.open_with(env, obj2).to_string() }
+                |env, obj1, obj2| { obj1.open_with(env, obj2).to_string() }
             );
             true
         },
@@ -110,7 +110,7 @@ pub fn execute(environment: &env::Environment, output: &Vec<parser::OutputAction
             one_obj_fn(environment, 
                 &objects, 
                 "Don't know what do you want to view.", 
-                |obj, env| { obj.view(env).to_string() }
+                |env, obj| { obj.view(env).to_string() }
             );            
             true
         },
@@ -118,7 +118,7 @@ pub fn execute(environment: &env::Environment, output: &Vec<parser::OutputAction
             one_obj_fn(environment, 
                 &objects, 
                 "Don't know what do you want to take.", 
-                |obj, env| { obj.take(env).to_string() }
+                |env, obj| { obj.take(env).to_string() }
             );  
             true
         },
