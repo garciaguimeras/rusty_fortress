@@ -1,5 +1,4 @@
 use std::fmt;
-use std::iter;
 
 #[derive(Clone, PartialEq)]
 enum StateAction {
@@ -19,7 +18,9 @@ pub enum Keyword {
     Help,
     Quit, 
     Open,
-    With
+    With,
+    View, 
+    Take
 }
 
 impl fmt::Display for Keyword {
@@ -28,7 +29,9 @@ impl fmt::Display for Keyword {
             Keyword::Help => write!(f, "Help"),
             Keyword::Quit => write!(f, "Quit"),
             Keyword::Open => write!(f, "Open"),
-            Keyword::With => write!(f, "With")
+            Keyword::With => write!(f, "With"),
+            Keyword::View => write!(f, "View"),
+            Keyword::Take => write!(f, "Take"),
         }
     }
 }
@@ -183,6 +186,8 @@ impl StateMachine {
                 .add_rule(StateRule::keyword_rule("?", "default_intermediate_state", Keyword::Help))
                 .add_rule(StateRule::keyword_rule("exit", "default_intermediate_state", Keyword::Quit))
                 .add_rule(StateRule::keyword_rule("quit", "default_intermediate_state", Keyword::Quit))
+                .add_rule(StateRule::keyword_rule("view", "default_intermediate_state", Keyword::View))
+                .add_rule(StateRule::keyword_rule("take", "default_intermediate_state", Keyword::Take))
                 .add_rule(StateRule::keyword_rule("open", "i_open", Keyword::Open))
                 .set_default_rule(StateRule::default_rule().set_move_state("unknown_state")),
         
@@ -190,10 +195,10 @@ impl StateMachine {
                 .set_default_rule(StateRule::error_rule()),
 
             State::build("default_intermediate_state")
-                .add_rule(StateRule::rule("").set_move_state("final_intermediate_state"))
+                .add_rule(StateRule::rule("").set_move_state("default_final_state"))
                 .set_default_rule(StateRule::default_rule().set_next_input().set_object_output()),
 
-            State::build("final_intermediate_state")
+            State::build("default_final_state")
                 .set_default_rule(StateRule::end_rule()),
 
             State::build("i_open")

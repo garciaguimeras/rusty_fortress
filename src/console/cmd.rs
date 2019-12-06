@@ -1,5 +1,5 @@
-use crate::obj::base;
 use crate::obj::env;
+use crate::obj::base;
 use super::parser;
 
 fn print_help() {
@@ -14,35 +14,37 @@ fn print_quit() {
     println!("Good bye, cruel world.");
 }
 
-fn open(environment: &env::Environment, objects: &Vec<String>) {
+fn one_obj_fn<P>(environment: &env::Environment, objects: &Vec<String>, null_obj_err: &str, predicate: P)
+where P: Fn(&Box<base::BaseObject>, &env::Environment) -> String {
     match objects.get(0) {
         Some(obj_name) => {
             match environment.find_object_by_name(&obj_name) {
                 Some(obj) => {
-                    let response = obj.open(&environment);
+                    let response = predicate(&obj, &environment);
                     println!("{}", response);
                 },
                 _ => println!("Cannot find {}.", obj_name)
             }
         },
-        _ => println!("Don't know what do you want to open.")
+        _ => println!("{}", null_obj_err)
     }
 }
 
-fn open_with(environment: &env::Environment, objects: &Vec<String>) {
+fn two_objs_fn<P>(environment: &env::Environment, objects: &Vec<String>, null_obj1_err: &str, null_obj2_err: &str, predicate: P) 
+where P: Fn(&Box<base::BaseObject>, &env::Environment, &Box<base::BaseObject>) -> String {    
     match (objects.get(0), objects.get(1)) {
         (Some(obj_name1), Some(obj_name2)) => {
             match (environment.find_object_by_name(&obj_name1), environment.find_object_by_name(&obj_name2))  {
                 (Some(obj1), Some(obj2)) => {
-                    let response = obj1.open_with(&environment, obj2);
+                    let response = predicate(obj1, &environment, obj2);
                     println!("{}", response);
                 },
                 (Some(_), None) => println!("Cannot find {}.", obj_name2),
                 _ => println!("Cannot find {}.", obj_name1)
             }
         },
-        (Some(_), None) => println!("Don't know what do you want to open with."),
-        _ => println!("Don't know what do you want to open."),
+        (Some(_), None) => println!("{}", null_obj2_err),
+        _ => println!("{}", null_obj1_err),
     }
 }
 
@@ -88,11 +90,36 @@ pub fn execute(environment: &env::Environment, output: &Vec<parser::OutputAction
             true
         },
         [parser::Keyword::Open] => {
-            open(environment, &objects);
+            one_obj_fn(environment, 
+                &objects, 
+                "Don't know what do you want to open.", 
+                |obj, env| { obj.open(env).to_string() }
+            );
             true
         },
         [parser::Keyword::Open, parser::Keyword::With] => {
-            open_with(environment, &objects);
+            two_objs_fn(environment, 
+                &objects, 
+                "Don't know what do you want to open.", 
+                "Don't know what do you want to open with.", 
+                |obj1, env, obj2| { obj1.open_with(env, obj2).to_string() }
+            );
+            true
+        },
+        [parser::Keyword::View] => {
+            one_obj_fn(environment, 
+                &objects, 
+                "Don't know what do you want to view.", 
+                |obj, env| { obj.view(env).to_string() }
+            );            
+            true
+        },
+        [parser::Keyword::Take] => {
+            one_obj_fn(environment, 
+                &objects, 
+                "Don't know what do you want to take.", 
+                |obj, env| { obj.take(env).to_string() }
+            );  
             true
         },
         _ => { 
