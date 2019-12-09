@@ -20,7 +20,8 @@ pub enum Keyword {
     Open,
     With,
     View, 
-    Take
+    Take,
+    GoThrough
 }
 
 impl fmt::Display for Keyword {
@@ -32,6 +33,7 @@ impl fmt::Display for Keyword {
             Keyword::With => write!(f, "With"),
             Keyword::View => write!(f, "View"),
             Keyword::Take => write!(f, "Take"),
+            Keyword::GoThrough => write!(f, "GoThrough")
         }
     }
 }
@@ -189,6 +191,7 @@ impl StateMachine {
                 .add_rule(StateRule::keyword_rule("view", "default_intermediate_state", Keyword::View))
                 .add_rule(StateRule::keyword_rule("take", "default_intermediate_state", Keyword::Take))
                 .add_rule(StateRule::keyword_rule("open", "i_open", Keyword::Open))
+                .add_rule(StateRule::rule("go").set_move_state("i_go").set_next_input())
                 .set_default_rule(StateRule::default_rule().set_move_state("unknown_state")),
         
             State::build("unknown_state")
@@ -210,7 +213,11 @@ impl StateMachine {
                 .set_default_rule(StateRule::keyword_rule("with", "default_intermediate_state", Keyword::With)),
 
             State::build("f_open")
-                .set_default_rule(StateRule::end_rule())
+                .set_default_rule(StateRule::end_rule()),
+
+            State::build("i_go")
+                .add_rule(StateRule::keyword_rule("through", "default_intermediate_state", Keyword::GoThrough))
+                .set_default_rule(StateRule::error_rule())
         );
         StateMachine {
             states: states

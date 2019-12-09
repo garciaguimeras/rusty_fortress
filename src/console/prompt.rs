@@ -2,7 +2,6 @@ use std::io;
 use std::io::Write;
 use crate::console::parser;
 use crate::obj::env;
-use super::cmd;
 
 fn prompt() {
     println!();
@@ -23,14 +22,14 @@ fn read_line() -> String {
 }
 
 pub fn run() {
-    let environment = env::Environment::new();
     let state_machine = parser::StateMachine::build();
+    let mut environment = env::Environment::new();
     let mut running = true;
     while running {
         let line = read_line();
         if line.len() > 0 {
             let output = state_machine.parse_line(&line);
-            running = cmd::execute(&environment, &output);
+            running = environment.execute(&output);
         }
     }
 }
