@@ -42,10 +42,8 @@ impl Environment {
 
                 match pos {
                     Option::Some(idx) => {
-                        let boxed = self.objects.get(idx).unwrap();
-                        let mut obj = (*boxed).clone();
-                        let response = predicate(&mut obj);
-                        mem::replace(self.objects.get_mut(idx).unwrap(), obj);
+                        let mut boxed = self.objects.get_mut(idx).unwrap();
+                        let response = predicate(&mut boxed);
                         println!("{}", response);
                     },
                     _ => println!("Cannot find {}.", obj_name)
@@ -71,9 +69,14 @@ impl Environment {
                         let mut obj1 = (*boxed1).clone();
                         let boxed2 = self.objects.get(idx2).unwrap();
                         let mut obj2 = (*boxed2).clone();
+
                         let response = predicate(&mut obj1, &mut obj2);
-                        mem::replace(self.objects.get_mut(idx1).unwrap(), obj1);
-                        mem::replace(self.objects.get_mut(idx2).unwrap(), obj2);
+                        
+                        let mut mut_obj = self.objects.get_mut(idx1).unwrap();
+                        *mut_obj = obj1;
+                        mut_obj = self.objects.get_mut(idx2).unwrap();
+                        *mut_obj = obj2;
+                        
                         println!("{}", response);
                     },
                     (Option::Some(_), Option::None) => println!("Cannot find {}.", obj_name2),

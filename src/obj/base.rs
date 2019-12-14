@@ -28,10 +28,10 @@ pub trait BaseObject {
 
 #[derive(Clone)]
 pub struct Door {
-    name: String,
-    description: String,
-    is_locked: bool,
-    locked_by: Option<String>
+    pub name: String,
+    pub description: String,
+    pub is_locked: bool,
+    pub locked_by: Option<String>
 }
 
 impl Door {
