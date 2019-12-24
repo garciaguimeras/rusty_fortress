@@ -1,4 +1,3 @@
-use std::mem;
 use super::base;
 use crate::console::parser;
 
@@ -15,8 +14,8 @@ fn print_quit() {
 }
 
 pub struct Environment {
-    //main_character: Box<base::BaseObject>,
-    objects: Vec<Box<base::BaseObject>>
+    //main_character: Box<dyn base::BaseObject>,
+    objects: Vec<Box<dyn base::BaseObject>>
 }
 
 impl Environment {
@@ -33,7 +32,7 @@ impl Environment {
     }
 
     fn one_obj_fn<P>(&mut self, objects: &Vec<String>, null_obj_err: &str, predicate: P)
-    where P: Fn(&mut Box<base::BaseObject>) -> String {
+    where P: Fn(&mut Box<dyn base::BaseObject>) -> String {
         match objects.get(0) {
             Some(obj_name) => {
                 
@@ -54,7 +53,7 @@ impl Environment {
     }
 
     fn two_objs_fn<P>(&mut self, objects: &Vec<String>, null_obj1_err: &str, null_obj2_err: &str, predicate: P) 
-    where P: Fn(&mut Box<base::BaseObject>, &Box<base::BaseObject>) -> String {    
+    where P: Fn(&mut Box<dyn base::BaseObject>, &Box<dyn base::BaseObject>) -> String {    
         match (objects.get(0), objects.get(1)) {
             (Some(obj_name1), Some(obj_name2)) => {
                 
@@ -132,7 +131,12 @@ impl Environment {
             [parser::Keyword::Open] => {
                 self.one_obj_fn(&objects, 
                     "What do you want to open?", 
-                    |obj| { obj.open().to_string() }
+                    |obj| { 
+                        return match obj.as_open_mut() {
+                            Some(open) => open.open().to_string(),
+                            None => "Oops! Cannot open that".to_string()
+                        }
+                    }
                 );
                 true
             },
@@ -140,28 +144,48 @@ impl Environment {
                 self.two_objs_fn(&objects, 
                     "What do you want to open?", 
                     "What do you want to use to open?", 
-                    |obj1, obj2| { obj1.open_with(obj2).to_string() }
+                    |obj1, obj2| { 
+                        return match obj1.as_open_mut() {
+                            Some(open) => open.open_with(obj2).to_string(),
+                            None => "Oops! Cannot open that".to_string()
+                        }
+                    }
                 );
                 true
             },
             [parser::Keyword::View] => {
                 self.one_obj_fn(&objects, 
                     "What do you want to view?", 
-                    |obj| { obj.view().to_string() }
+                    |obj| { 
+                        return match obj.as_view_mut() {
+                            Some(view) => view.view().to_string(),
+                            None => "Oops! Cannot view that. It seems to be invisible!".to_string()
+                        };
+                    }
                 );            
                 true
             },
             [parser::Keyword::Take] => {
                 self.one_obj_fn(&objects, 
                     "What do you want to take?", 
-                    |obj| { obj.take().to_string() }
+                    |obj| {
+                        return match obj.as_take_mut() {
+                            Some(take) => take.take().to_string(),
+                            None => "Oops! Cannot take that".to_string()
+                        }
+                    }
                 );  
                 true
             },
             [parser::Keyword::GoThrough] => {
                 self.one_obj_fn(&objects, 
                     "What do you want to go through?", 
-                    |obj| { obj.go_through().to_string() }
+                    |obj| { 
+                        return match obj.as_go_mut() {
+                            Some(go) => go.go_through().to_string(),
+                            None => "Oops! Cannot go through that".to_string()
+                        }
+                    }
                 );
                 true
             },
