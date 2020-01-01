@@ -132,7 +132,7 @@ impl Environment {
                 self.one_obj_fn(&objects, 
                     "What do you want to open?", 
                     |obj| { 
-                        return match obj.as_open_mut() {
+                        return match obj.into_boxed_mut() as Option<Box<&mut base::Open>> {
                             Some(open) => open.open().to_string(),
                             None => "Oops! Cannot open that".to_string()
                         }
@@ -145,7 +145,7 @@ impl Environment {
                     "What do you want to open?", 
                     "What do you want to use to open?", 
                     |obj1, obj2| { 
-                        return match obj1.as_open_mut() {
+                        return match obj1.into_boxed_mut() as Option<Box<&mut base::Open>> {
                             Some(open) => open.open_with(obj2).to_string(),
                             None => "Oops! Cannot open that".to_string()
                         }
@@ -157,7 +157,7 @@ impl Environment {
                 self.one_obj_fn(&objects, 
                     "What do you want to view?", 
                     |obj| { 
-                        return match obj.as_view_mut() {
+                        return match obj.into_boxed_mut() as Option<Box<&mut base::View>> {
                             Some(view) => view.view().to_string(),
                             None => "Oops! Cannot view that. It seems to be invisible!".to_string()
                         };
@@ -169,7 +169,7 @@ impl Environment {
                 self.one_obj_fn(&objects, 
                     "What do you want to take?", 
                     |obj| {
-                        return match obj.as_take_mut() {
+                        return match obj.into_boxed_mut() as Option<Box<&mut base::Take>> {
                             Some(take) => take.take().to_string(),
                             None => "Oops! Cannot take that".to_string()
                         }
@@ -181,7 +181,7 @@ impl Environment {
                 self.one_obj_fn(&objects, 
                     "What do you want to go through?", 
                     |obj| { 
-                        return match obj.as_go_mut() {
+                        return match obj.into_boxed_mut() as Option<Box<&mut base::Go>> {
                             Some(go) => go.go_through().to_string(),
                             None => "Oops! Cannot go through that".to_string()
                         }
