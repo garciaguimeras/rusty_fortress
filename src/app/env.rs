@@ -1,16 +1,16 @@
-use super::base;
-use crate::console::parser;
+use crate::obj::base;
+use super::parser;
 
-fn print_help() {
-    println!("This help, right now, doesn't help too much.");
+fn help_message() -> String {
+    "This help, right now, doesn't help too much.".to_string()
 }
 
-fn print_error() {
-    println!("Cannot understand what are you trying to do.");
+fn error_message() -> String {
+    "Cannot understand what are you trying to do.".to_string()
 }
 
-fn print_quit() {
-    println!("Good bye, cruel world.");
+fn quit_message() -> String {
+    "Good bye, cruel world.".to_string()
 }
 
 pub struct Environment {
@@ -31,7 +31,7 @@ impl Environment {
         }
     }
 
-    fn one_obj_fn<P>(&mut self, objects: &Vec<String>, null_obj_err: &str, predicate: P)
+    fn one_obj_fn<P>(&mut self, objects: &Vec<String>, null_obj_err: &str, predicate: P) -> String
     where P: Fn(&mut Box<dyn base::BaseObject>) -> String {
         match objects.get(0) {
             Some(obj_name) => {
@@ -43,16 +43,16 @@ impl Environment {
                     Option::Some(idx) => {
                         let mut boxed = self.objects.get_mut(idx).unwrap();
                         let response = predicate(&mut boxed);
-                        println!("{}", response);
+                        format!("{}", response)
                     },
-                    _ => println!("Cannot find {}.", obj_name)
+                    _ => format!("Cannot find {}.", obj_name)
                 }
             },
-            _ => println!("{}", null_obj_err)
+            _ => format!("{}", null_obj_err)
         }
     }
 
-    fn two_objs_fn<P>(&mut self, objects: &Vec<String>, null_obj1_err: &str, null_obj2_err: &str, predicate: P) 
+    fn two_objs_fn<P>(&mut self, objects: &Vec<String>, null_obj1_err: &str, null_obj2_err: &str, predicate: P) -> String 
     where P: Fn(&mut Box<dyn base::BaseObject>, &Box<dyn base::BaseObject>) -> String {    
         match (objects.get(0), objects.get(1)) {
             (Some(obj_name1), Some(obj_name2)) => {
@@ -76,14 +76,14 @@ impl Environment {
                         mut_obj = self.objects.get_mut(idx2).unwrap();
                         *mut_obj = obj2;
                         
-                        println!("{}", response);
+                        format!("{}", response)
                     },
-                    (Option::Some(_), Option::None) => println!("Cannot find {}.", obj_name2),
-                    _ => println!("Cannot find {}.", obj_name1)
+                    (Option::Some(_), Option::None) => format!("Cannot find {}.", obj_name2),
+                    _ => format!("Cannot find {}.", obj_name1)
                 }
             },
-            (Some(_), None) => println!("{}", null_obj2_err),
-            _ => println!("{}", null_obj1_err),
+            (Some(_), None) => format!("{}", null_obj2_err),
+            _ => format!("{}", null_obj1_err)
         }
     }
 
@@ -109,27 +109,24 @@ impl Environment {
         objects
     }
 
-    pub fn execute(&mut self, output: &Vec<parser::OutputAction>) -> bool {
+    pub fn execute(&mut self, output: &Vec<parser::OutputAction>) -> (bool, String) {
         // Check if last output is error
         let last_action = output.get(output.len() - 1).unwrap();
         if let parser::OutputAction::Error = last_action {
-            print_error();
-            return true;
+            return (true, error_message());
         }
      
         let keywords = self.get_all_keywords(&output);
         let objects = self.get_all_objects(&output);
         return match keywords.as_slice() {
             [parser::Keyword::Quit] => {
-                print_quit();
-                false
+                (false, quit_message())
             },
             [parser::Keyword::Help] => {
-                print_help();
-                true
+                (true, help_message())
             },
             [parser::Keyword::Open] => {
-                self.one_obj_fn(&objects, 
+                (true, self.one_obj_fn(&objects, 
                     "What do you want to open?", 
                     |obj| { 
                         return match obj.into_boxed_mut() as Option<Box<&mut base::Open>> {
@@ -137,11 +134,10 @@ impl Environment {
                             None => "Oops! Cannot open that".to_string()
                         }
                     }
-                );
-                true
+                ))
             },
             [parser::Keyword::Open, parser::Keyword::With] => {
-                self.two_objs_fn(&objects, 
+                (true, self.two_objs_fn(&objects, 
                     "What do you want to open?", 
                     "What do you want to use to open?", 
                     |obj1, obj2| { 
@@ -150,11 +146,10 @@ impl Environment {
                             None => "Oops! Cannot open that".to_string()
                         }
                     }
-                );
-                true
+                ))
             },
             [parser::Keyword::View] => {
-                self.one_obj_fn(&objects, 
+                (true, self.one_obj_fn(&objects, 
                     "What do you want to view?", 
                     |obj| { 
                         return match obj.into_boxed_mut() as Option<Box<&mut base::View>> {
@@ -162,11 +157,10 @@ impl Environment {
                             None => "Oops! Cannot view that. It seems to be invisible!".to_string()
                         };
                     }
-                );            
-                true
+                ))
             },
             [parser::Keyword::Take] => {
-                self.one_obj_fn(&objects, 
+                (true, self.one_obj_fn(&objects, 
                     "What do you want to take?", 
                     |obj| {
                         return match obj.into_boxed_mut() as Option<Box<&mut base::Take>> {
@@ -174,11 +168,10 @@ impl Environment {
                             None => "Oops! Cannot take that".to_string()
                         }
                     }
-                );  
-                true
+                ))
             },
             [parser::Keyword::GoThrough] => {
-                self.one_obj_fn(&objects, 
+                (true, self.one_obj_fn(&objects, 
                     "What do you want to go through?", 
                     |obj| { 
                         return match obj.into_boxed_mut() as Option<Box<&mut base::Go>> {
@@ -186,12 +179,10 @@ impl Environment {
                             None => "Oops! Cannot go through that".to_string()
                         }
                     }
-                );
-                true
+                ))
             },
             _ => { 
-                print_error();
-                true
+                (true, error_message())
             }
         };
     }
