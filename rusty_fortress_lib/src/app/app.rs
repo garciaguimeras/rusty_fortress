@@ -6,7 +6,7 @@ pub trait InOut {
     fn write_line(&self, line: String);
 }
 
-pub fn run<T: InOut>(in_out: &T) {
+pub fn run<T: InOut>(in_out: T) {
     let state_machine = parser::StateMachine::build();
     let mut environment = env::Environment::new();
     let mut running = true;

@@ -1,10 +1,2 @@
-[package]
-name = "rusty_fortress"
-version = "0.1.0"
-authors = ["Noel Garcia Guimeras <garcia.guimeras@gmail.com>"]
-edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-toml = "0.5"
+[workspace]
+members = ["rusty_fortress_lib", "rusty_fortress_console"]
