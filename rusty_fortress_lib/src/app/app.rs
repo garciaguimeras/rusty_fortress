@@ -1,4 +1,7 @@
-use crate::app::parser;
+use crate::app::command::DefaultCommandHandler;
+use crate::app::command::HandleCommand;
+use crate::app::parser::Keyword;
+use crate::app::parser::StateMachine;
 
 pub trait InOut {
     fn read_line(&self) -> String;
@@ -6,23 +9,20 @@ pub trait InOut {
 }
 
 pub fn run<T: InOut>(in_out: T) {
-    let state_machine = parser::StateMachine::build();
+    let mut handler = DefaultCommandHandler::new();
+    let state_machine = StateMachine::build();
     let mut running = true;
     while running {
         let line = in_out.read_line();
         if line.len() > 0 {
             let command = state_machine.parse_line(&line);
-            println!("{}", command);
+            //println!("{}", command);
             
-            let result = if let Option::Some(parser::Keyword::Quit) = command.keyword { 
-                (false, String::from("Good bye, cruel world!"))
+            if let Option::Some(Keyword::Quit) = command.keyword {
+                running = false;
             } 
-            else { 
-                (true, String::from("Keep trying to quit")) 
-            };
-
-            running = result.0;
-            in_out.write_line(result.1);
+            let text = handler.resolve_command(&command);
+            in_out.write_line(text);
         }
     }
 }
