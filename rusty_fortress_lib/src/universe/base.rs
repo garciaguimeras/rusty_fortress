@@ -10,7 +10,7 @@ pub trait Open {
 
 // Open with
 pub trait OpenWith {
-    fn open_with(&mut self) -> String;
+    fn open_with(&mut self, key: &str) -> String;
 }
 
 // Take
