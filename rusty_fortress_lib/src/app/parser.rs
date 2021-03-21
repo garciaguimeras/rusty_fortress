@@ -18,7 +18,7 @@ pub enum Keyword {
     Help,
     Quit, 
     Open,
-    With,
+    OpenWith,
     View, 
     Take,
     GoThrough
@@ -30,7 +30,7 @@ impl fmt::Display for Keyword {
             Keyword::Help => write!(f, "Help"),
             Keyword::Quit => write!(f, "Quit"),
             Keyword::Open => write!(f, "Open"),
-            Keyword::With => write!(f, "With"),
+            Keyword::OpenWith => write!(f, "With"),
             Keyword::View => write!(f, "View"),
             Keyword::Take => write!(f, "Take"),
             Keyword::GoThrough => write!(f, "GoThrough")
@@ -210,7 +210,7 @@ impl StateMachine {
                 .set_default_rule(StateRule::default_rule().set_next_input().set_object_output()),
 
             State::build("i_openwith")
-                .set_default_rule(StateRule::keyword_rule("with", "default_intermediate_state", Keyword::With)),
+                .set_default_rule(StateRule::keyword_rule("with", "default_intermediate_state", Keyword::OpenWith)),
 
             State::build("f_open")
                 .set_default_rule(StateRule::end_rule()),

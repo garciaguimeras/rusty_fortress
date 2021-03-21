@@ -1,2 +1,2 @@
-mod obj;
+mod legacy;
 pub mod app;

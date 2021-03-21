@@ -13,7 +13,7 @@ pub trait View {
 
 pub trait Open {
     fn open(&mut self) -> &str;
-    fn open_with(&mut self, _obj: &Box<BaseObject>) -> &str;
+    fn open_with(&mut self, _obj: &Box<dyn BaseObject>) -> &str;
 }
 
 // Take
@@ -30,10 +30,10 @@ pub trait Go {
 
 // BaseObject
 
-pub trait BaseObject: IntoBoxed<View> + IntoBoxed<Open> + IntoBoxed<Take> + IntoBoxed<Go> {
+pub trait BaseObject: IntoBoxed<dyn View> + IntoBoxed<dyn Open> + IntoBoxed<dyn Take> + IntoBoxed<dyn Go> {
     fn name(&self) -> &str;
     fn description(&self) -> &str;
-    fn clone(&self) -> Box<BaseObject>;
+    fn clone(&self) -> Box<dyn BaseObject>;
 }
 
 #[derive(Clone)]
@@ -83,7 +83,7 @@ impl Open for Door {
         }
     }
 
-    fn open_with(&mut self, obj: &Box<BaseObject>) -> &str {
+    fn open_with(&mut self, obj: &Box<dyn BaseObject>) -> &str {
         return match self.is_locked {
             false => "It's already opened.",
             true => {
@@ -108,7 +108,7 @@ impl BaseObject for Door {
         &self.description
     }
 
-    fn clone(&self) -> Box<BaseObject> {
+    fn clone(&self) -> Box<dyn BaseObject> {
         Door::boxed(self.name.clone(), 
             self.description.clone(), 
             self.is_locked.clone(), 
@@ -129,36 +129,36 @@ impl IntoBoxed<dyn Take> for Door {
 
 impl IntoBoxed<dyn Open> for Door {
     fn into_boxed(&self) -> Option<Box<&(dyn Open + 'static)>> {
-        let w = self as &Open;
+        let w = self as &dyn Open;
         Option::Some(Box::new(w))
     }
 
     fn into_boxed_mut(&mut self) -> Option<Box<&mut (dyn Open + 'static)>> {
-        let p = self as &mut Open;
+        let p = self as &mut dyn Open;
         Option::Some(Box::new(p))
     }
 }
 
 impl IntoBoxed<dyn View> for Door {
     fn into_boxed(&self) -> Option<Box<&(dyn View + 'static)>> {
-        let w = self as &View;
+        let w = self as &dyn View;
         Option::Some(Box::new(w))
     }
 
     fn into_boxed_mut(&mut self) -> Option<Box<&mut (dyn View + 'static)>> {
-        let p = self as &mut View;
+        let p = self as &mut dyn View;
         Option::Some(Box::new(p))
     }
 }
 
 impl IntoBoxed<dyn Go> for Door {
     fn into_boxed(&self) -> Option<Box<&(dyn Go + 'static)>> {
-        let w = self as &Go;
+        let w = self as &dyn Go;
         Option::Some(Box::new(w))
     }
 
     fn into_boxed_mut(&mut self) -> Option<Box<&mut (dyn Go + 'static)>> {
-        let p = self as &mut Go;
+        let p = self as &mut dyn Go;
         Option::Some(Box::new(p))
     }
 }

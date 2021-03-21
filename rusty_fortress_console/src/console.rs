@@ -1,6 +1,6 @@
 use std::io;
 use std::io::Write;
-use crate::rusty_fortress_lib::app::app;
+use rusty_fortress_lib::app::app;
 
 pub struct Console {}
 

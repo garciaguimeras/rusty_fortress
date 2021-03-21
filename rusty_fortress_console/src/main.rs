@@ -1,6 +1,5 @@
-extern crate rusty_fortress_lib;
+use rusty_fortress_lib::app::app;
 
-use crate::rusty_fortress_lib::app::app;
 mod console;
 
 fn main() {

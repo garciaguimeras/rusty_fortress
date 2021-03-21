@@ -1,5 +1,5 @@
-use crate::obj::base;
-use super::parser;
+use crate::legacy::base;
+use crate::app::parser;
 
 fn help_message() -> String {
     "This help, right now, doesn't help too much.".to_string()
@@ -129,19 +129,19 @@ impl Environment {
                 (true, self.one_obj_fn(&objects, 
                     "What do you want to open?", 
                     |obj| { 
-                        return match obj.into_boxed_mut() as Option<Box<&mut base::Open>> {
+                        return match obj.into_boxed_mut() as Option<Box<&mut dyn base::Open>> {
                             Some(open) => open.open().to_string(),
                             None => "Oops! Cannot open that".to_string()
                         }
                     }
                 ))
             },
-            [parser::Keyword::Open, parser::Keyword::With] => {
+            [parser::Keyword::Open, parser::Keyword::OpenWith] => {
                 (true, self.two_objs_fn(&objects, 
                     "What do you want to open?", 
                     "What do you want to use to open?", 
                     |obj1, obj2| { 
-                        return match obj1.into_boxed_mut() as Option<Box<&mut base::Open>> {
+                        return match obj1.into_boxed_mut() as Option<Box<&mut dyn base::Open>> {
                             Some(open) => open.open_with(obj2).to_string(),
                             None => "Oops! Cannot open that".to_string()
                         }
@@ -152,7 +152,7 @@ impl Environment {
                 (true, self.one_obj_fn(&objects, 
                     "What do you want to view?", 
                     |obj| { 
-                        return match obj.into_boxed_mut() as Option<Box<&mut base::View>> {
+                        return match obj.into_boxed_mut() as Option<Box<&mut dyn base::View>> {
                             Some(view) => view.view().to_string(),
                             None => "Oops! Cannot view that. It seems to be invisible!".to_string()
                         };
@@ -163,7 +163,7 @@ impl Environment {
                 (true, self.one_obj_fn(&objects, 
                     "What do you want to take?", 
                     |obj| {
-                        return match obj.into_boxed_mut() as Option<Box<&mut base::Take>> {
+                        return match obj.into_boxed_mut() as Option<Box<&mut dyn base::Take>> {
                             Some(take) => take.take().to_string(),
                             None => "Oops! Cannot take that".to_string()
                         }
@@ -174,7 +174,7 @@ impl Environment {
                 (true, self.one_obj_fn(&objects, 
                     "What do you want to go through?", 
                     |obj| { 
-                        return match obj.into_boxed_mut() as Option<Box<&mut base::Go>> {
+                        return match obj.into_boxed_mut() as Option<Box<&mut dyn base::Go>> {
                             Some(go) => go.go_through().to_string(),
                             None => "Oops! Cannot go through that".to_string()
                         }
