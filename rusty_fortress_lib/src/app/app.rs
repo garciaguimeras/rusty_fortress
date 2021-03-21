@@ -11,16 +11,16 @@ pub fn run<T: InOut>(in_out: T) {
     while running {
         let line = in_out.read_line();
         if line.len() > 0 {
-            let output = state_machine.parse_line(&line);
-            let last_action = output.get(output.len() - 1).unwrap();
-            let result = match last_action { 
-                parser::OutputAction::Keyword(parser::Keyword::Quit) => { 
-                    (false, String::from("Good bye, cruel world!"))
-                },
-                _ => {
-                    (true, String::from("Keep trying to quit"))
-                }
+            let command = state_machine.parse_line(&line);
+            println!("{}", command);
+            
+            let result = if let Option::Some(parser::Keyword::Quit) = command.keyword { 
+                (false, String::from("Good bye, cruel world!"))
+            } 
+            else { 
+                (true, String::from("Keep trying to quit")) 
             };
+
             running = result.0;
             in_out.write_line(result.1);
         }

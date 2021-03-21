@@ -30,7 +30,7 @@ impl fmt::Display for Keyword {
             Keyword::Help => write!(f, "Help"),
             Keyword::Quit => write!(f, "Quit"),
             Keyword::Open => write!(f, "Open"),
-            Keyword::OpenWith => write!(f, "With"),
+            Keyword::OpenWith => write!(f, "OpenWith"),
             Keyword::View => write!(f, "View"),
             Keyword::Take => write!(f, "Take"),
             Keyword::GoThrough => write!(f, "GoThrough")
@@ -175,6 +175,33 @@ impl fmt::Display for State {
     }
 }
 
+pub struct Command {
+    pub status: bool,
+    pub keyword: Option<Keyword>,
+    pub objects: Vec<String>
+}
+
+impl fmt::Display for Command {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        return if self.status {
+            let kwd = self.keyword.as_ref().unwrap()
+            if self.objects.len() == 0 {
+                write!(f, "Keyword: {}", kwd)
+            }
+            else {
+                let mut text = String::from("");
+                self.objects.iter().for_each(|s| {
+                    text = if text == "" { format!("'{}'", s) } else { format!("{}, '{}'", text, s) }
+                });
+                write!(f, "Keyword: {} / Objects: {}", kwd, text)
+            }
+        }
+        else {
+            write!(f, "No keyword defined")
+        }
+    }
+}
+
 pub struct StateMachine {
     states: Vec<State>    
 }
@@ -228,30 +255,41 @@ impl StateMachine {
         self.states.iter().find(|s| s.name == name)
     }
 
-    fn mix_output_state(&self, output: Vec<OutputAction>) -> Vec<OutputAction> {
-        let mut new_output: Vec<OutputAction> = Vec::new();
-        let mut new_txt = String::from("");
-        
+    fn build_command(&self, output: Vec<OutputAction>) -> Command {
+        let mut objs = Vec::new();
+        let mut err = false;
+        let mut kwd: Option<Keyword> = Option::None;
+
+        let mut new_txt = String::from("");        
         for output_state in output.iter() {
             if let OutputAction::Object(txt) = output_state {
                 new_txt = if new_txt == "" { txt.to_string() } else { format!("{} {}", new_txt, txt) }
             }
             else {
                 if new_txt != "" {
-                    new_output.push(OutputAction::Object(new_txt));
+                    objs.push(new_txt);
                     new_txt = String::from("");
                 }
-                new_output.push(output_state.clone());
+                if let OutputAction::Keyword(k) = output_state {
+                    kwd = Option::Some(k.clone())
+                }
+                if let OutputAction::Error = output_state {
+                    err = true
+                }
             }
         }
         if new_txt != "" {
-            new_output.push(OutputAction::Object(new_txt));
+            objs.push(new_txt);
         }
 
-        new_output
+        Command {
+            status: !err,
+            objects: objs,
+            keyword: kwd
+        }
     }
 
-    pub fn parse_line(&self, text: &str) -> Vec<OutputAction> {
+    pub fn parse_line(&self, text: &str) -> Command {
         let words: Vec<String> = text.trim().split(' ')                       
             .map(|w| w.to_lowercase())
             .collect();
@@ -286,11 +324,7 @@ impl StateMachine {
             }
 
         }
-
-        output = self.mix_output_state(output);
-        //for output_state in output.iter() {
-        //    println!("{}", output_state);
-        //}
-        output
+        
+        self.build_command(output)
     }
 }

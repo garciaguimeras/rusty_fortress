@@ -11,8 +11,6 @@ impl Console {
     }
 
     fn prompt(&self) {
-        println!();
-        //println!("What do you want to do now?");
         print!("> ");
         let _ = io::stdout().flush();
     }
