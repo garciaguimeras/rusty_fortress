@@ -1,3 +1,8 @@
+// Object
+pub trait Name {
+    fn name(&self) -> String;
+}
+
 // View
 pub trait View {
     fn view(&mut self) -> String;

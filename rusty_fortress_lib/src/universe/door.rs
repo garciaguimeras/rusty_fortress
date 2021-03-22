@@ -4,6 +4,7 @@ use crate::app::command::HandleCommand;
 use crate::app::parser::Keyword;
 use crate::universe::base::Open;
 use crate::universe::base::OpenWith;
+use crate::universe::base::Name;
 
 #[derive(Clone, PartialEq)]
 enum DoorState {
@@ -14,7 +15,14 @@ enum DoorState {
 // Door
 #[derive(Clone, PartialEq)]
 pub struct Door {
+    name: String,
     state: DoorState
+}
+
+impl Name for Door {
+    fn name(&self) -> std::string::String { 
+        String::from(&self.name)
+    }
 }
 
 impl HandleCommand for Door {   
@@ -45,8 +53,9 @@ impl Open for Door {
 }
 
 impl Door {
-    pub fn new() -> Door {
+    pub fn new(name: &str) -> Door {
         Door {
+            name: String::from(name),
             state: DoorState::CLOSED
         }
     }
@@ -55,8 +64,15 @@ impl Door {
 // Locked door
 #[derive(Clone, PartialEq)]
 pub struct LockedDoor {
+    name: String,
     state: DoorState,
     key: String
+}
+
+impl Name for LockedDoor {
+    fn name(&self) -> std::string::String { 
+        String::from(&self.name)
+    }
 }
 
 impl HandleCommand for LockedDoor {   
@@ -108,8 +124,9 @@ impl Open for LockedDoor {
 }
 
 impl LockedDoor {
-    pub fn new(key: &str) -> LockedDoor {
+    pub fn new(name: &str, key: &str) -> LockedDoor {
         LockedDoor {
+            name: String::from(name),
             state: DoorState::CLOSED,
             key: String::from(key)
         }
